@@ -3,3 +3,4 @@ supabase
 pandas
 altair
 streamlit-option-menu
+streamlit-lottie
