@@ -16,6 +16,24 @@ if "refresh" in st.session_state:
 # ------------------------------------------------
 st.set_page_config(page_title="Business Dashboard", layout="centered")
 
+# ---- Load Lottie animation ----
+def load_lottiefile(filepath):
+    with open(filepath, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+if "show_intro" not in st.session_state:
+    st.session_state.show_intro = True
+
+if st.session_state.show_intro:
+    lottie_intro = load_lottiefile("Revenue.json")
+    splash = st.empty()
+    with splash.container():
+        st.markdown("<h1 style='text-align:center;'>WELCOME to Business app</h1>", unsafe_allow_html=True)
+        st_lottie(lottie_intro, height=350, speed=1.0, loop=False)
+        time.sleep(3)
+    splash.empty()
+    st.session_state.show_intro = False
+
 SUPABASE_URL = st.secrets.get("SUPABASE_URL")
 SUPABASE_KEY = st.secrets.get("SUPABASE_KEY")
 
@@ -255,3 +273,4 @@ if "user" not in st.session_state:
     login_screen()
 else:
     dashboard()
+
