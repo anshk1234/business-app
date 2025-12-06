@@ -4,7 +4,9 @@ import altair as alt
 from supabase import create_client
 from datetime import datetime
 from streamlit_option_menu import option_menu
-
+import time
+import json
+from streamlit_lottie import st_lottie
 # ------------------------------------------------
 # PREVENT LOGOUT ON REFRESH
 # ------------------------------------------------
@@ -273,4 +275,5 @@ if "user" not in st.session_state:
     login_screen()
 else:
     dashboard()
+
 
