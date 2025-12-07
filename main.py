@@ -7,6 +7,9 @@ from streamlit_option_menu import option_menu
 import time
 import json
 from streamlit_lottie import st_lottie
+import requests
+import random
+
 # ------------------------------------------------
 # PREVENT LOGOUT ON REFRESH
 # ------------------------------------------------
@@ -36,6 +39,7 @@ if st.session_state.show_intro:
     splash.empty()
     st.session_state.show_intro = False
 
+
 SUPABASE_URL = st.secrets.get("SUPABASE_URL")
 SUPABASE_KEY = st.secrets.get("SUPABASE_KEY")
 
@@ -44,6 +48,7 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     st.stop()
 
 sb = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 
 # ------------------------------------------------
 # AUTH FUNCTIONS
@@ -102,6 +107,65 @@ def parse_dates(df: pd.DataFrame, col: str):
         df[col] = pd.to_datetime(df[col], errors="coerce")
     return df
 
+def mini_chart(seed=None, height=100):
+    """Render a sparkline-style chart with better visibility."""
+    if seed is not None:
+        random.seed(seed)
+    data = pd.DataFrame({
+        "x": list(range(12)),
+        "y": [random.randint(5, 35) for _ in range(12)]
+    })
+
+    st.bar_chart(
+        data.set_index("x")["y"],
+        height=height,
+        use_container_width=True,
+        color=["#22c55e"]
+    )
+
+
+def service_card(name: str,
+                 status: bool,
+                 ok_text: str = "Healthy",
+                 fail_text: str = "Not Responding",
+                 icon: str = "ℹ️"):
+    """
+    Renders a styled card with a header (icon + title + status text) and a mini chart underneath.
+
+    name: label shown
+    status: True => healthy (green), False => failing (red)
+    ok_text / fail_text: strings used for the status text
+    icon: small emoji or text for the card
+    """
+    green = "#143d27"
+    red = "#3d1414"
+    bg = green if status else red
+    status_text = ok_text if status else fail_text
+
+    st.markdown(
+        f"""
+        <div style="
+            background:{bg};
+            padding:16px;
+            border-radius:12px;
+            margin-bottom:8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+        ">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="font-size:20px;">{icon}</div>
+                <div style="flex:1;">
+                    <div style="font-weight:700; color:#fff; font-size:18px; margin-bottom:2px;">{name}</div>
+                    <div style="color:rgba(255,255,255,0.9); font-size:14px;">— {status_text}</div>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # deterministic-ish mini chart per service name so visuals are stable
+    seed = abs(hash(name)) % 10000
+    mini_chart(seed=seed, height=300)
 # ------------------------------------------------
 # MAIN DASHBOARD
 # ------------------------------------------------
@@ -112,8 +176,8 @@ def dashboard():
 
         section = option_menu(
             menu_title="Dashboard Menu",
-            options=["📊 Sales Dashboard", "👥 Customer Details", "📦 Product Analytics"],
-            icons=["bar-chart", "people-fill", "box"],
+            options=["📊 Sales Dashboard", "👥 Customer Details", "📦 Product Analytics", "⚡ Project Status"],
+            icons=["bar-chart", "people-fill", "box", "activity"],
             default_index=0
         )
 
@@ -267,7 +331,26 @@ def dashboard():
             st.metric("Total Inventory Value", f"₹ {total_value:,.0f}")
             st.dataframe(products_df)
 
+    elif section == "⚡ Project Status":
+        st.title("⚡ Project Status")
+        st.write("")
 
+    # --- Replace these with REAL checks later ---
+        database_ok = True
+        auth_ok = True
+        storage_ok = True
+        postgrest_ok = True
+        realtime_ok = False
+        edge_ok = True
+
+    # ---- UI Cards ----
+        service_card("Database", database_ok, ok_text="Healthy", fail_text="Not Responding", icon="🗄")
+        service_card("Auth", auth_ok, ok_text="Healthy", fail_text="Not Responding", icon="🔐")
+        service_card("Storage", storage_ok, ok_text="Healthy", fail_text="Not Responding", icon="🗂")
+        service_card("PostgREST", postgrest_ok, ok_text="Healthy", fail_text="Not Responding", icon="🔧")
+        service_card("Realtime", realtime_ok, ok_text="Healthy", fail_text="Not Responding", icon="📡")
+        service_card("Edge Functions", edge_ok, ok_text="Healthy", fail_text="Not Responding", icon="⚙️")
+ 
 # ------------------------------------------------
 # APP ENTRY
 # ------------------------------------------------
@@ -275,5 +358,3 @@ if "user" not in st.session_state:
     login_screen()
 else:
     dashboard()
-
-
