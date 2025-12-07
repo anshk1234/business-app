@@ -1,6 +1,8 @@
 streamlit
-supabase
 pandas
 altair
+supabase
 streamlit-option-menu
 streamlit-lottie
+requests
+python-dateutil
